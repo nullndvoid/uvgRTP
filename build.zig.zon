@@ -1,0 +1,18 @@
+.{
+    .name = .uvgRTP,
+    .version = "3.1.6",
+    .fingerprint = 0xe0cad47e569a88d3,
+    .minimum_zig_version = "0.15.2", // TODO: Check this (i'm using master).
+    .dependencies = .{
+        .cryptopp = .{
+            .url = "git+https://github.com/nullndvoid/cryptopp_fixlatestzig#18e3fc6f6f26aa34dbbc8a2c8e979f5a82bb7d3c",
+            .hash = "cryptopp-8.8.0-sgE5bEroXQC2J8WkI0M4cEoiZ4vF-QJ7rJzcua9F6gEu",
+        },
+    },
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "src",
+        "include",
+    },
+}
