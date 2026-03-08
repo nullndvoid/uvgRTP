@@ -23,6 +23,7 @@ pub fn build(b: *std.Build) !void {
         .target = target,
         .optimize = optimize,
         .link_libcpp = true,
+        .root_source_file = b.path("uvgRTP.zig"),
     });
 
     const lib = b.addLibrary(.{
