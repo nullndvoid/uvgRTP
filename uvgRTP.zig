@@ -1,5 +1,7 @@
 const std = @import("std");
-const c = @cImport(@cInclude("uvgrtp/wrapper_c.h"));
+
+// Just in case I forgot to wrap something.
+pub const c = @cImport(@cInclude("uvgrtp/wrapper_c.h"));
 
 pub fn getUvgRTPErrorNo() c_int {
     return c.rtp_errno;
@@ -17,8 +19,7 @@ fn ensureOk(result: c_int) UvgRTPError!void {
 }
 
 pub const RtpFormat = enum(c_int) {
-    generic = c.RTP_FORMAT_GENERIC,
-    pcmu = c.RTP_FORMAT_PCMU,
+    generic_or_pcmu = c.RTP_FORMAT_GENERIC,
     gsm = c.RTP_FORMAT_GSM,
     g723 = c.RTP_FORMAT_G723,
     dvi4_32 = c.RTP_FORMAT_DVI4_32,

@@ -1,5 +1,6 @@
 const std = @import("std");
-const c = @cImport(@cInclude("uvgrtp/wrapper_c.h"));
+
+const rtp = @import("uvgRTP");
 
 const REMOTE_PORT = 8891;
 const LOCAL_PORT = 8890;
@@ -7,57 +8,41 @@ const REMOTE_ADDRESS = "127.0.0.1";
 const N_TEST_PACKETS = 100;
 
 pub fn main() !void {
-    const ctx = c.uvgrtp_create_ctx();
+    var ctx = try rtp.Context.init();
+    defer ctx.deinit();
 
-    if (ctx == null) {
-        return error.InitialisationError;
-    }
+    var session = try rtp.Session.init(&ctx, REMOTE_ADDRESS);
+    defer session.deinit(&ctx) catch |e| {
+        std.log.err(
+            "Could not deinitialise Session with error: {any}, errno: {d}.",
+            .{ e, rtp.getUvgRTPErrorNo() },
+        );
+    };
 
-    defer c.uvgrtp_destroy_ctx(ctx);
+    const flags = rtp.RceFlags{ .receive_only = true };
 
-    const session = c.uvgrtp_create_session(ctx, REMOTE_ADDRESS);
-
-    if (session == null) {
-        return error.InitialisationError;
-    }
-
-    defer _ = c.uvgrtp_destroy_session(ctx, session);
-
-    const flags = c.RCE_RECEIVE_ONLY;
-
-    const opus_stream = c.uvgrtp_create_stream(
-        session,
+    var opus_stream = try rtp.Stream.init(
+        &session,
         LOCAL_PORT,
         REMOTE_PORT,
-        c.RTP_FORMAT_OPUS,
+        .opus,
         flags,
     );
-
-    if (opus_stream == null) {
-        return error.InitialisationError;
-    }
-
-    defer _ = c.uvgrtp_destroy_stream(session, opus_stream);
+    defer opus_stream.deinit(&session) catch |e| {
+        std.log.err(
+            "Could not deinitialise Opus RTP Stream with error: {any}, errno: {d}.",
+            .{ e, rtp.getUvgRTPErrorNo() },
+        );
+    };
 
     var recieved: u8 = 0;
-    while (recieved < N_TEST_PACKETS) {
-        const frame = c.uvgrtp_pull_frame(opus_stream);
-        defer c.uvgrtp_frame_free(frame);
-
-        if (frame == null) {
-            std.log.err(
-                "uvgrtp_pull_frame failed (rtp_errno={d})",
-                .{c.rtp_errno},
-            );
-
-            continue;
-        }
-
-        recieved += 1;
+    while (recieved < N_TEST_PACKETS) : (recieved += 1) {
+        var frame = try opus_stream.pullFrame();
+        defer frame.deinit();
 
         std.log.info(
             "Recieved frame {d}/{d}, payload_len = {d}",
-            .{ recieved, N_TEST_PACKETS, frame.*.payload_len },
+            .{ recieved, N_TEST_PACKETS, frame.payloadLen() },
         );
     }
 }

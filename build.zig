@@ -214,6 +214,8 @@ pub fn build(b: *std.Build) !void {
             }),
         });
 
+        exe.root_module.addImport("uvgRTP", mod);
+
         exe.root_module.link_libcpp = true;
         exe.root_module.link_libc = true;
 
